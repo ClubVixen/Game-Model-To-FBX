@@ -148,6 +148,10 @@ def prepare_materials(extracted, mod_packages):
                 a[:,:,1]=255-a[:,:,1]  # Unreal DirectX -> Blender/OpenGL tangents
                 save('normal',Image.fromarray(a[:,:,:3]))
             orm=load('orm','ORM','OcclusionRoughnessMetallic','OcclusionRoughnessMetallicTexture')
+            if 'ShadowColor(UV1)' in textures and 'T_Common_LinearBlack' in recipe.get('references',{}).get('orm',{}).get('asset',''):
+                orm=None
+                recipe['roughness']=max(.05,min(1,scalars.get('RoughnessPower',.5)))
+                recipe['approximations'].append('Inactive black ORM placeholder excluded from stylized hair; RoughnessPower used as portable roughness.')
             if orm is not None:
                 save('occlusion',orm.getchannel('R'))
                 save('roughness',orm.getchannel('G'))
