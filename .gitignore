@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+settings.json
+Converted/
+extracted/
+*.fbx
+*.glb
+*.uasset
+*.ucas
+*.utoc
+*.pak
+*.blend
+build/
+dist/
+tools/*.exe
+mappings/*.usmap
+*.log

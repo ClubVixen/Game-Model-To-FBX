@@ -1,0 +1,66 @@
+diff --git a/CUE4Parse-Conversion/Dto/MeshMaterialDto.cs b/CUE4Parse-Conversion/Dto/MeshMaterialDto.cs
+index bbea7e9..db4d03d 100644
+--- a/CUE4Parse-Conversion/Dto/MeshMaterialDto.cs
++++ b/CUE4Parse-Conversion/Dto/MeshMaterialDto.cs
+@@ -6,7 +6,7 @@ namespace CUE4Parse_Conversion.Dto;
+ 
+ public readonly struct MeshMaterialDto(string? slotName, FPackageIndex? material = null)
+ {
+-    public readonly string SlotName = material?.Name ?? slotName ?? "None";
++    public readonly string SlotName = material?.Name is { } name && name != "None" ? name : slotName ?? "None";
+     public readonly FPackageIndex? Material = material;
+ 
+     public MeshMaterialDto(FStaticMaterial material) : this(material.ImportedMaterialSlotName?.Text ?? material.MaterialSlotName.Text, material.MaterialInterface)
+diff --git a/CUE4Parse-Conversion/Exporters/SkinnedAssetExporter.cs b/CUE4Parse-Conversion/Exporters/SkinnedAssetExporter.cs
+index 1ab022e..a747f73 100644
+--- a/CUE4Parse-Conversion/Exporters/SkinnedAssetExporter.cs
++++ b/CUE4Parse-Conversion/Exporters/SkinnedAssetExporter.cs
+@@ -2,6 +2,9 @@
+ using CUE4Parse.UE4.Assets.Exports.Rig;
+ using CUE4Parse_Conversion.Dto;
+ using CUE4Parse_Conversion.Formats.Meshes;
++using CUE4Parse.UE4.Assets.Exports.Material;
++using Newtonsoft.Json;
++using System.Text;
+ 
+ namespace CUE4Parse_Conversion.Exporters;
+ 
+@@ -32,6 +35,22 @@ protected override IReadOnlyList<ExportFile> BuildFiles(USkinnedAsset originalMe
+         }
+ 
+         var materialPaths = EnqueueMaterials(dto.Materials);
+-        return format.BuildSkeletalMesh(ObjectName, ObjectPath, Session.Options, dto, materialPaths);
++        var files = format.BuildSkeletalMesh(ObjectName, ObjectPath, Session.Options, dto, materialPaths).ToList();
++        var slots = dto.Materials.Select(slot => {
++            var loaded = slot.Material?.TryLoad<UMaterialInterface>(out var material) == true ? material : null;
++            string? fallback = null;
++            if (loaded == null) {
++                var baseName = System.Text.RegularExpressions.Regex.Replace(slot.SlotName, @"_0\d\d$", "");
++                var matches = dto.Materials.Where(other => other.SlotName == baseName && other.SlotName != slot.SlotName).ToArray();
++                if (matches.Length == 1 && matches[0].Material?.TryLoad<UMaterialInterface>(out var duplicate) == true) {
++                    loaded = duplicate;
++                    fallback = "Null duplicate material slot resolved to the same mesh's named base slot: " + baseName;
++                }
++            }
++            return new { slot = slot.SlotName, material = loaded?.GetPathName(),
++                json = loaded != null ? new MaterialExporter(loaded).SavePath + ".json" : null, fallback };
++        }).ToArray();
++        files.Add(new ExportFile("materials.json", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(slots, Formatting.Indented))));
++        return files;
+     }
+ }
+diff --git a/CUE4Parse.CLI/Program.cs b/CUE4Parse.CLI/Program.cs
+index 92199c4..b035670 100644
+--- a/CUE4Parse.CLI/Program.cs
++++ b/CUE4Parse.CLI/Program.cs
+@@ -283,7 +283,9 @@ public static IEnumerable<string> Filter(IEnumerable<string> paths, string patte
+             // Create provider
+             provider = directory.EndsWith(".apk")
+                 ? new ApkFileProvider(directory, new VersionContainer(gameVersion))
+-                : new DefaultFileProvider(directory, SearchOption.AllDirectories, new VersionContainer(gameVersion));
++                : new DefaultFileProvider(new DirectoryInfo(directory), sources.Skip(1).Select(p => new DirectoryInfo(p)).ToArray(),
++                    sources.Length > 1 ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories,
++                    new VersionContainer(gameVersion), StringComparer.OrdinalIgnoreCase);
+ 
+             // Set mappings if specified
+             if (!string.IsNullOrEmpty(mappings) && File.Exists(mappings))
