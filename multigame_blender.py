@@ -1,5 +1,6 @@
 """Background worker. Never opens or changes the interactive Blender scene."""
 import bpy
+import bmesh
 import json
 from pathlib import Path
 import sys
@@ -43,25 +44,58 @@ if kind == 'zzz':
     for o in list(bpy.context.scene.objects):
         if o.type != 'ARMATURE':
             bpy.data.objects.remove(o, do_unlink=True)
+    # Extracted FBXs can carry a neutral pose differing from their bind transforms.
+    # The raw buffers are already in that neutral shape; bind against this pose.
+    bpy.context.view_layer.objects.active = rig
+    rig.select_set(True)
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.armature_apply(selected=False)
+    bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.preferences.addon_enable(module='XXMITools')
     maps = json.loads(Path(job['bone_map']).read_text())
     textures = job.get('material_map', {})
     for path in inputs:
         p = Path(path)
         before = set(bpy.data.objects)
-        bpy.ops.import_mesh.migoto_raw_buffers(filepath=str(p), files=[{'name': p.name}])
+        bpy.ops.import_mesh.migoto_raw_buffers(filepath=str(p), files=[{'name': p.name}],
+            axis_forward=job.get('zzz_axis_forward', 'Y'), axis_up=job.get('zzz_axis_up', 'Z'))
         imported = [o for o in set(bpy.data.objects)-before if o.type == 'MESH']
         if not imported:
             raise RuntimeError(f'No mesh imported from {p}')
-        mapping = maps.get(p.stem, maps.get('*', {}))
+        # Rig Transfer saves maps per draw part; shared indices can mean different bones.
+        mapping = maps.get('parts', {}).get(p.stem, {}).get('map')
+        if mapping is None:
+            mapping = maps.get(p.stem, maps.get('*', {}))
         for obj in imported:
-            for group in obj.vertex_groups:
-                if group.name.isdigit():
-                    dest = mapping.get(group.name)
+            # Shared buffers include vertices for other draws/toggle variants.
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+            bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+            bm.to_mesh(obj.data)
+            bm.free()
+            weights = []
+            names = {g.index: g.name for g in obj.vertex_groups}
+            for vertex in obj.data.vertices:
+                merged = {}
+                for weight in vertex.groups:
+                    if weight.weight <= 1e-8:
+                        continue
+                    name = names[weight.group]
+                    dest = mapping.get(name) if name.isdigit() else name
                     if not dest or dest not in rig.data.bones:
-                        raise ValueError(f'{p.stem}: unmapped skin index {group.name}')
-                    group.name = dest
+                        raise ValueError(f'{p.stem}: unmapped skin index {name}')
+                    merged[dest] = merged.get(dest, 0.0) + weight.weight
+                weights.append(merged)
+            # Renaming collisions creates .001 groups, which do not bind to the bone.
+            obj.vertex_groups.clear()
+            groups = {name: obj.vertex_groups.new(name=name)
+                      for name in sorted({n for w in weights for n in w})}
+            for index, merged in enumerate(weights):
+                for name, weight in merged.items():
+                    groups[name].add([index], weight, 'REPLACE')
+            world = obj.matrix_world.copy()
             obj.parent = rig
+            obj.matrix_world = world
             mod = obj.modifiers.new('Skin', 'ARMATURE')
             mod.object = rig
             texpath = textures.get(p.stem)

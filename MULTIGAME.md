@@ -47,7 +47,7 @@ Use the prepared part's filename stem as the key. `"*"` is a fallback only when 
 
 `material_map` similarly maps part stems to PNG/DDS diffuse images. Shader masks, toggles, component-specific UV conventions, and physics require inspection. Matching a base character's name alone is insufficient. A reference-format or palette mismatch can produce a valid-looking file with incorrect deformation.
 
-The adapter is implemented but has not yet passed a real buffer-mod end-to-end test in this checkout. The Belle/Pheony hero samples originate from already extracted ZZZ FBXs; they do not validate the buffer-mod adapter.
+The raw-buffer route has now passed a selected-component test with Sixth Streetwear Belle (original hair + headband). This is not a complete-character validation. The Belle/Pheony Deadlock skins above originate from already extracted FBXs and remain separate samples.
 
 ## Koikatsu Party cards
 
@@ -96,7 +96,7 @@ Recorded local tests:
 | St. Louis KKBP prepared scene | 60,709 vertices / 904 bones / 4 bound meshes; 60,377 bone-weighted vertices preserved |
 | Celestia KKBP PMX → automatic bake → FBX | 34,206 vertices / 804 bones / 3 bound meshes preserved; 29 materials baked. Installed-game appearance differs from card preview |
 | Four example Koikatsu PNGs | Appended card payloads inspected successfully |
-| ZZZ raw buffer adapter | Awaiting a matching real mod/reference/palette fixture |
+| ZZZ Sixth Streetwear Belle, selected hair draw ranges | 3,534 vertices / 292 bones / 1 bound mesh preserved; all vertices weighted. Neutral render inspected; all 3,534 vertices respond to a 25-degree head rotation. Full outfit blocked by incomplete bone mapping |
 
 Generated models, game files, cards, personal configuration and vendor binaries are excluded from this source repository. Treat a successful file conversion and an in-game-tested mod as separate milestones.
 
@@ -113,3 +113,29 @@ Built and imported through Deadlock Mod Manager 2.2.0:
 These are initial playable test builds, not full combat-validation passes. Movement, firing, reloads, abilities and physics extremes still need dedicated testing. Hideout screenshots were saved locally; they are not proof of those remaining checks.
 
 After the tests, the existing Buck McGinnis and Lashlyn skins were restored as active. Belle and St. Louis remain available as disabled alternatives in the library. Apollo remains enabled. To switch alternatives, enable the desired skin and choose **Swap mods**, then restart Deadlock; do not enable two replacements for the same hero together.
+
+
+### ZZZ component and toggle selection
+
+The reader enumerates resources; it does not execute a mod INI or automatically resolve every conditional draw. A toggle mod can contain several mutually exclusive hairstyles in the same vertex/index buffers. Select the actual draw ranges for one configuration, using `drawindexed = count, first_index, base_vertex` from its INI:
+
+```json
+{
+  "components": ["BelleHairA"],
+  "draw_ranges": {
+    "BelleHairA": [[6282, 0, 0], [930, 6282, 0], [7059, 7212, 0]]
+  },
+  "zzz_axis_forward": "Y",
+  "zzz_axis_up": "Z"
+}
+```
+
+This specific example selects Sixth Streetwear Belle's shared hair, headband and original hairstyle. These numbers are sample-specific, not universal defaults. Without draw ranges all triangles in a selected buffer are imported. Only vertices referenced by the selected triangles are retained. A component-only export does not add missing face/body meshes from the base FBX.
+
+Both a simple per-part dictionary and the existing Rig Transfer `parts -> part -> map` JSON schema are supported. Many-to-one mappings combine weights rather than creating nonbinding `.001` groups. Missing weighted indices fail explicitly; uncertain saved mappings still need deformation inspection. The base FBX's current pose becomes the binding rest pose, and parenting preserves mesh world transforms. Verify that the supplied base pose matches the raw model before accepting a new character.
+
+The real sample exposed an inactive BodyB resource referencing indices 27,669�27,682 despite a 27,669-vertex buffer, and BodyA uses weighted index 71 absent from its saved map. The converter rejects these cases rather than inventing a bone assignment. Choose only active components and repair the body map against the matching source skeleton before exporting a full character. Reference element bounds, triangle counts, draw ranges and index bounds are checked before Blender import.
+
+A neutral Blender render of the selected hairstyle was inspected and saved alongside the local FBX.
+
+The image shows only the selected component. Original ZZZ shader rendering, full-character deformation and in-game behavior are not established by this test.

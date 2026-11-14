@@ -6,9 +6,46 @@ import re
 from pathlib import Path
 import subprocess
 import sys
+import struct
 from card_reader import inspect_card
 
 ROOT = Path(__file__).resolve().parent
+
+
+def validate_zzz_buffers(path, draw_ranges=None):
+    """Reject incompatible layouts and out-of-range triangles before Blender."""
+    from zzz_mod_prep import parse_reference_fmt, dxgi_size
+    path = Path(path)
+    strides, elements, topology, index_format = parse_reference_fmt(path.with_suffix('.fmt').read_text())
+    stride = strides.get(0, 0)
+    size = path.with_suffix('.vb0').stat().st_size
+    if stride <= 0 or size % stride:
+        raise ValueError(f'{path.stem}: invalid vertex stride/size')
+    for element in elements:
+        if int(element['InputSlot']) != 0 or int(element['AlignedByteOffset']) + dxgi_size(element['Format']) > stride:
+            raise ValueError(f'{path.stem}: reference element exceeds vertex layout')
+    if topology != 'trianglelist':
+        raise ValueError(f'{path.stem}: unsupported topology {topology}')
+    code = {'R32_UINT': 'I', 'R16_UINT': 'H'}.get((index_format or '').replace('DXGI_FORMAT_', ''))
+    if not code:
+        raise ValueError(f'{path.stem}: unsupported index format {index_format}')
+    data = path.read_bytes()
+    width = struct.calcsize('<' + code)
+    if draw_ranges is not None:
+        selected = bytearray()
+        for count, start, base_vertex in draw_ranges:
+            if count <= 0 or count % 3 or start < 0 or (start + count) * width > len(data):
+                raise ValueError(f'{path.stem}: invalid drawindexed range')
+            for (value,) in struct.iter_unpack('<' + code, data[start * width:(start + count) * width]):
+                selected.extend(struct.pack('<' + code, value + base_vertex))
+        data = bytes(selected)
+    if not data or len(data) % (3 * width):
+        raise ValueError(f'{path.stem}: invalid triangle index buffer size')
+    largest = max(value[0] for value in struct.iter_unpack('<' + code, data))
+    if largest >= size // stride:
+        raise ValueError(f'{path.stem}: index {largest} exceeds {size // stride} vertices; check inactive resources, draw ranges and matching buffers')
+    if draw_ranges is not None:
+        path.write_bytes(data)
 
 
 def run(args, log):
@@ -74,8 +111,16 @@ def convert(source, kind, output, config):
             run([sys.executable, config.get('zzz_reader', str(ROOT/'zzz_mod_prep.py')), 'prepare', source, '-o', target/'prepared',
                  '--ref', config['reference']], target/'prepare.log')
             job['inputs'] = [str(p) for p in (target/'prepared').glob('*.ib')]
+            if config.get('components'):
+                wanted = set(config['components'])
+                job['inputs'] = [p for p in job['inputs'] if Path(p).stem in wanted]
+                missing = wanted - {Path(p).stem for p in job['inputs']}
+                if missing:
+                    raise ValueError(f'Requested components not prepared: {sorted(missing)}')
             if not job['inputs']:
                 raise RuntimeError('Reader produced no importable index buffers')
+            for path in job['inputs']:
+                validate_zzz_buffers(path, config.get('draw_ranges', {}).get(Path(path).stem))
             report['warnings'].append('Uses an explicit per-part bone map and material map; source shaders/physics are not portable.')
         elif kind == 'koikatsu':
             if source.suffix.lower() == '.pmx':
