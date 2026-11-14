@@ -1,5 +1,10 @@
 # Marvel Rivals to Rigged FBX
 
+Also includes a separate **Mod to FBX** batch reader/converter for Deadlock VPKs,
+ZZZ buffer mods, and Koikatsu Party cards/KKBP exports. See
+[multi-game setup and limitations](MULTIGAME.md). Start it with
+`python multigame_gui.py`; the existing Marvel Rivals application is unchanged.
+
 Windows batch GUI with local game material lookup, inherited base tints, UV1 hair color baking, and rig/embedded-texture validation.
 
 Download the portable Windows ZIP from Releases, extract the entire folder, and run RivalsFbxConverter.exe. Install Blender 4.2 separately. Select your installed game's Content/Paks folder and compatible .usmap in the app. Mod and game models/textures are not included.

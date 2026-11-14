@@ -1,0 +1,12 @@
+{
+  "blender": "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe",
+  "kkbp_blender": "C:/Tools/Blender-3.6/blender.exe",
+  "kkbp_addons": "C:/Tools/KKBP-addons",
+  "vrf": "C:/Tools/Source2Viewer-CLI.exe",
+  "gameinfo": "C:/Games/Deadlock/game/citadel/gameinfo.gi",
+  "reference": "C:/Models/ZZZ/MatchingOriginalDump",
+  "base_fbx": "C:/Models/ZZZ/MatchingBase.fbx",
+  "bone_map": "C:/Models/ZZZ/bone_map.json",
+  "material_map": {"ExampleBodyA": "C:/Models/ZZZ/BodyDiffuse.png"},
+  "assemblies": {"REPLACE_WITH_CARD_SHA256": "C:/Models/Koikatsu/KKBP_baked.blend"}
+}

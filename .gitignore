@@ -15,3 +15,7 @@ dist/
 tools/*.exe
 mappings/*.usmap
 *.log
+*.vpk
+*.pmx
+*.blend1
+local-config*.json
