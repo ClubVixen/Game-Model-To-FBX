@@ -99,3 +99,17 @@ Recorded local tests:
 | ZZZ raw buffer adapter | Awaiting a matching real mod/reference/palette fixture |
 
 Generated models, game files, cards, personal configuration and vendor binaries are excluded from this source repository. Treat a successful file conversion and an in-game-tested mod as separate milestones.
+
+### Deadlock sample skins (2026-11-14)
+
+Built and imported through Deadlock Mod Manager 2.2.0:
+
+| Skin | Target | Runtime observation |
+|---|---|---|
+| StLouis_Lash | Lash | Textured model loaded and followed the hideout idle animation; naval accessories retained |
+| Belle_McGinnis | McGinnis | Textured model loaded and animated; wrist/weapon contact needs further tuning |
+| Pheony_Apollo | Apollo | Textured model loaded and animated; long hair has substantial secondary motion and needs further tuning |
+
+These are initial playable test builds, not full combat-validation passes. Movement, firing, reloads, abilities and physics extremes still need dedicated testing. Hideout screenshots were saved locally; they are not proof of those remaining checks.
+
+After the tests, the existing Buck McGinnis and Lashlyn skins were restored as active. Belle and St. Louis remain available as disabled alternatives in the library. Apollo remains enabled. To switch alternatives, enable the desired skin and choose **Swap mods**, then restart Deadlock; do not enable two replacements for the same hero together.
