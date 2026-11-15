@@ -39,7 +39,7 @@ def inspect_card(path):
         cursor += length
         return value
     marker, version = read_string(), read_string()
-    if marker != '【KoiKatuChara】': raise ValueError('Unsupported card marker')
+    if marker not in ('【KoiKatuChara】', '【KoiKatuCharaSun】'): raise ValueError('Unsupported card marker')
     preview_size = struct.unpack_from('<i', data, cursor)[0]
     cursor += 4 + preview_size
     if preview_size < 0 or cursor + 4 > len(data):

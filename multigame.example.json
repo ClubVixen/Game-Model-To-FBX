@@ -2,6 +2,8 @@
   "blender": "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe",
   "kkbp_blender": "C:/Tools/Blender-3.6/blender.exe",
   "kkbp_addons": "C:/Tools/KKBP-addons",
+  "koikatsu_mods": "C:/Games/Koikatsu Party/mods",
+  "koikatsu_outfit": 0,
   "vrf": "C:/Tools/Source2Viewer-CLI.exe",
   "gameinfo": "C:/Games/Deadlock/game/citadel/gameinfo.gi",
   "reference": "C:/Models/ZZZ/MatchingOriginalDump",

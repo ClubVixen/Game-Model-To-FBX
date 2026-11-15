@@ -19,3 +19,4 @@ mappings/*.usmap
 *.pmx
 *.blend1
 local-config*.json
+studio-exporter/*.dll

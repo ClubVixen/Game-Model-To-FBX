@@ -34,12 +34,14 @@ class App(tk.Tk):
         ttk.Button(row, text='Add files', command=self.add_files).pack(side='left')
         ttk.Button(row, text='Add mod folder', command=self.add_folder).pack(side='left')
         ttk.Button(row, text='Remove selected', command=self.remove).pack(side='left')
+        row = ttk.Frame(self, padding=10)
+        row.pack(fill='x')
         self.buttons = []
-        for label, action in [('Inspect / Read Mods', 'inspect'), ('Convert Batch to FBX', 'convert')]:
+        for label, action in [('Inspect / Read Mods', 'inspect'), ('Convert Batch to FBX', 'convert'), ('Sunshine to KK card', 'convert-card')]:
             b = ttk.Button(row, text=label, command=lambda a=action:self.start(a))
             b.pack(side='left', padx=8)
             self.buttons.append(b)
-        ttk.Label(self, text='Koikatsu cards need a game-assembled KKBP .blend. ZZZ needs the matching rig, bone map and textures.', wraplength=850).pack(padx=10)
+        ttk.Label(self, text='Koikatsu: convert Sunshine cards, check mods, then use Maker/KKBP PMX or Studio FBX Bridge .studio.json. FBX exports include editable PNG textures. ZZZ needs the matching rig and bone map.', wraplength=850).pack(padx=10)
         self.log = tk.Text(self, height=17, state='disabled')
         self.log.pack(fill='both', expand=True, padx=10, pady=10)
         self.after(150, self.poll)
@@ -49,7 +51,7 @@ class App(tk.Tk):
         if p: variable.set(p)
 
     def add_files(self):
-        for p in filedialog.askopenfilenames(filetypes=[('Supported inputs', '*.vpk *.png *.blend *.pmx'), ('All files', '*.*')]):
+        for p in filedialog.askopenfilenames(filetypes=[('Supported inputs', '*.vpk *.png *.blend *.pmx *.studio.json'), ('All files', '*.*')]):
             self.inputs.insert('end', p)
 
     def add_folder(self):
@@ -72,7 +74,12 @@ class App(tk.Tk):
             for source in sources:
                 self.messages.put('Reading ' + source)
                 try:
-                    result = inspect(source, kind, config) if action == 'inspect' else str(convert(source, kind, output, config))
+                    if action == 'convert-card':
+                        if kind != 'koikatsu': raise ValueError('Choose Koikatsu for card conversion')
+                        from koikatsu_card import prepare_card
+                        result = prepare_card(source, output, config)
+                    else:
+                        result = inspect(source, kind, config) if action == 'inspect' else str(convert(source, kind, output, config))
                     self.messages.put(json.dumps(result, indent=2))
                 except Exception as exc: self.messages.put('FAILED: ' + str(exc))
             self.messages.put(None)

@@ -4,6 +4,44 @@ import bmesh
 import json
 from pathlib import Path
 import sys
+import re
+
+
+def export_textures(objects, folder):
+    folder.mkdir(parents=True, exist_ok=True)
+    images, bindings = {}, []
+    def visit(tree, seen):
+        if not tree or tree.as_pointer() in seen: return
+        seen.add(tree.as_pointer())
+        for node in tree.nodes:
+            if node.type == 'TEX_IMAGE' and node.image:
+                yield node.image
+            elif node.type == 'GROUP':
+                yield from visit(node.node_tree, seen)
+    for obj in objects:
+        if obj.type != 'MESH': continue
+        for mat in obj.data.materials:
+            if not mat or not mat.use_nodes: continue
+            for image in visit(mat.node_tree, set()):
+                key = image.as_pointer()
+                if key not in images:
+                    if image.source not in {'FILE', 'GENERATED'}:
+                        raise ValueError(f'Unsupported editable texture source: {image.name} ({image.source})')
+                    name = re.sub(r'[^A-Za-z0-9_.-]', '_', image.name)[:100]
+                    path = folder / f'{len(images):03d}_{Path(name).stem}.png'
+                    # Load external pixels before replacing their source path.
+                    if not image.has_data: image.pixels[0]
+                    if not image.has_data: raise ValueError(f'Texture has no pixels: {image.name}')
+                    image.filepath_raw = str(path)
+                    image.file_format = 'PNG'
+                    image.save()
+                    if not path.is_file() or path.stat().st_size == 0:
+                        raise ValueError(f'Texture was not written: {image.name}')
+                    if image.packed_file: image.unpack(method='REMOVE')
+                    image.filepath = str(path)
+                    images[key] = str(path)
+                bindings.append({'object':obj.name,'material':mat.name,'image':image.name,'file':images[key]})
+    return bindings
 
 
 def import_asset(path):
@@ -116,7 +154,12 @@ for index, path in enumerate(inputs):
     if kind != 'zzz':
         bpy.ops.wm.read_factory_settings(use_empty=True)
         if kind == 'koikatsu':
-            bpy.ops.wm.open_mainfile(filepath=str(Path(job['source']).resolve()))
+            if job.get('studio_manifest'):
+                sys.path.insert(0, str(Path(__file__).resolve().parent))
+                from studio_import import import_studio
+                import_studio(job['studio_manifest'])
+            else:
+                bpy.ops.wm.open_mainfile(filepath=str(Path(job['source']).resolve()))
         else:
             import_asset(path)
     # Remove glTF bone display meshes, never real character geometry.
@@ -133,15 +176,31 @@ for index, path in enumerate(inputs):
         raise ValueError('Expected a rigged mesh; empty or unskinned result rejected')
     name = Path(path).stem if path else Path(job['source']).stem
     out = target / f'{index:02d}_{name}.fbx'
+    mesh_inventory = [{'name':o.name,'vertices':len(o.data.vertices),'materials':[m.name for m in o.data.materials if m]}
+                      for o in bpy.context.selected_objects if o.type == 'MESH']
+    for required in job.get('required_mesh_names', []):
+        if not any(required.casefold() in o['name'].casefold() for o in mesh_inventory):
+            raise ValueError(f'Required accessory/mesh absent from export: {required}')
+    for required in job.get('required_material_names', []):
+        if not any(required.casefold() in m.casefold() for o in mesh_inventory for m in o['materials']):
+            raise ValueError(f'Required accessory material absent from export: {required}')
+    texture_bindings = export_textures(list(bpy.context.selected_objects), target/'textures'/out.stem)
+    (target / f'{index:02d}_materials.json').write_text(json.dumps(texture_bindings, indent=2))
+    bpy.ops.wm.save_as_mainfile(filepath=str(out.with_suffix('.blend')))
+    bpy.ops.file.make_paths_relative()
     bpy.ops.wm.save_as_mainfile(filepath=str(out.with_suffix('.blend')))
     bpy.ops.export_scene.fbx(filepath=str(out), use_selection=True,
         object_types={'ARMATURE', 'MESH'}, add_leaf_bones=False, bake_anim=False, use_mesh_modifiers=False,
-        path_mode='COPY', embed_textures=True, axis_forward='-Z', axis_up='Y')
+        path_mode='RELATIVE', embed_textures=False, axis_forward='-Z', axis_up='Y')
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=str(out), use_anim=False)
     after = snapshot()
+    for img in bpy.data.images:
+        if img.source == 'FILE' and img.filepath and not Path(bpy.path.abspath(img.filepath)).is_file():
+            raise RuntimeError(f'FBX texture reference is missing: {img.filepath}')
     for key in ('vertices', 'bones', 'weighted_vertices', 'bound_meshes'):
         if after[key] != before[key]:
             raise RuntimeError(f'FBX round-trip changed {key}: {before[key]} -> {after[key]}')
-    outputs.append({'fbx': str(out), 'before': before, 'after': after})
+    outputs.append({'fbx': str(out), 'before': before, 'after': after,
+                    'meshes':mesh_inventory,'textures':texture_bindings})
 (target/'validation.json').write_text(json.dumps(outputs, indent=2))

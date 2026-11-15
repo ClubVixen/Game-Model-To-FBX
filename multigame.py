@@ -59,8 +59,18 @@ def run(args, log):
 
 def inspect(source, kind, config):
     source = Path(source).resolve()
+    if kind == 'koikatsu' and source.name.endswith('.studio.json'):
+        from studio_import import read_manifest
+        data = read_manifest(source)
+        return {'type':'koikatsu-studio','character':data['character'], 'pose':data['pose'],
+                'meshes':[m['name'] for m in data['meshes']], 'bones':len(data['bones']),
+                'materials':len(data['materials']), 'warning':data.get('warning')}
     if kind == 'koikatsu' and source.suffix.lower() == '.png':
-        return inspect_card(source)
+        result = inspect_card(source)
+        if config.get('koikatsu_mods'):
+            from koikatsu_card import audit_dependencies
+            result['dependencies'] = audit_dependencies(source, config['koikatsu_mods'], config.get('koikatsu_outfit', 0))
+        return result
     if kind == 'deadlock':
         proc = subprocess.run([config['vrf'], '-i', str(source), '-l', '-e', 'vmdl_c'],
                               capture_output=True, text=True, errors='replace')
@@ -123,7 +133,12 @@ def convert(source, kind, output, config):
                 validate_zzz_buffers(path, config.get('draw_ranges', {}).get(Path(path).stem))
             report['warnings'].append('Uses an explicit per-part bone map and material map; source shaders/physics are not portable.')
         elif kind == 'koikatsu':
-            if source.suffix.lower() == '.pmx':
+            if source.name.endswith('.studio.json'):
+                from studio_import import read_manifest
+                read_manifest(source)
+                job['studio_manifest'] = str(source)
+                report['warnings'].append('Studio current pose becomes rest pose. Unity shaders and physics are not reproduced.')
+            elif source.suffix.lower() == '.pmx':
                 if not config.get('kkbp_blender'):
                     raise ValueError('PMX preparation requires kkbp_blender (Blender 3.6) with KKBP 6.6.3 and mmd_tools 2.9.2')
                 prep = dict(config, source=str(source), target=str(target/'kkbp'))
@@ -162,7 +177,7 @@ def convert(source, kind, output, config):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['inspect', 'convert'])
+    p.add_argument('action', choices=['inspect', 'convert', 'convert-card'])
     p.add_argument('kind', choices=['deadlock', 'zzz', 'koikatsu'])
     p.add_argument('source', nargs='+')
     p.add_argument('--config', required=True)
@@ -172,7 +187,12 @@ def main():
     failures = 0
     for source in args.source:
         try:
-            result = inspect(source, args.kind, config) if args.action == 'inspect' else str(convert(source, args.kind, args.output, config))
+            if args.action == 'convert-card':
+                if args.kind != 'koikatsu': raise ValueError('Card compatibility conversion is only for Koikatsu')
+                from koikatsu_card import prepare_card
+                result = prepare_card(source, args.output, config)
+            else:
+                result = inspect(source, args.kind, config) if args.action == 'inspect' else str(convert(source, args.kind, args.output, config))
             print(json.dumps(result, indent=2))
         except Exception as exc:
             failures += 1

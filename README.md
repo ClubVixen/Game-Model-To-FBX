@@ -5,6 +5,8 @@ ZZZ buffer mods, and Koikatsu Party cards/KKBP exports. See
 [multi-game setup and limitations](MULTIGAME.md). Start it with
 `python multigame_gui.py`; the existing Marvel Rivals application is unchanged.
 
+Koikatsu retains **Character Maker + KKBP** and adds a separate [CharaStudio export path](KOIKATSU_STUDIO.md), Sunshine card compatibility conversion, installed-mod dependency reports and editable PNGs beside FBX files.
+
 Windows batch GUI with local game material lookup, inherited base tints, UV1 hair color baking, and rig/embedded-texture validation.
 
 Download the portable Windows ZIP from Releases, extract the entire folder, and run RivalsFbxConverter.exe. Install Blender 4.2 separately. Select your installed game's Content/Paks folder and compatible .usmap in the app. Mod and game models/textures are not included.

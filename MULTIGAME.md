@@ -51,6 +51,16 @@ The raw-buffer route has now passed a selected-component test with Sixth Streetw
 
 ## Koikatsu Party cards
 
+Two paths are supported: the existing **Character Maker + KKBP** path below, and the separate [CharaStudio bridge](KOIKATSU_STUDIO.md). Keep both plugins installed. Studio exports the selected character directly, including its loaded accessories, without requiring the card to appear in Maker.
+
+### Sunshine cards and accessory dependencies
+
+Choose **koikatsu**, add card PNGs and click **Sunshine to KK card**. This implements the two Parameter version changes described by [astralash's converter](https://github.com/astralash/ConvertKKS-CC-to-KK-CC), using kkloader. It writes a new `_KK.png` in a timestamped folder, preserves the preview and non-Parameter blocks, and never overwrites the original. Unknown versions are rejected. File compatibility checks do not guarantee acceptance by every game/plugin: the Applejack sample loads in Studio but still does not appear in the Maker browser.
+
+Set `koikatsu_mods` to the game's `mods` folder and `koikatsu_outfit` to the zero-based outfit slot. **Inspect / Read Mods** reports the card's Sideloader GUIDs and installed zipmods, including hair stored as an accessory. Conversion writes `card-report.json`. Missing GUIDs and unreadable archives are reported. The game must assemble those assets before export; the reader does not install mods or reconstruct arbitrary Unity bundles itself. GUID presence alone does not prove item/version compatibility.
+
+### Character Maker export
+
 A card PNG contains a preview plus appended parameter/plugin data. It does **not** contain all the meshes and textures. The card reader checks that payload and reports its SHA256 and plugin identifiers without executing it. All four supplied example cards passed envelope inspection.
 
 1. Use an existing Koikatsu Party installation with BepInEx, KKAPI, Sideloader, and the card's required zipmods. Put cards in `UserData/chara/female` or a subfolder.
@@ -71,6 +81,12 @@ To batch card PNGs after manual assembly, map each card's reported SHA256 to its
 ```
 
 This prevents accidentally exporting the same assembled character for every card in a batch. Custom KKBP shaders and simulation do not transfer directly into FBX; baked textures and bone weights do.
+
+### Editable textures and accessory checks
+
+Both paths write separate PNGs under `textures/<FBX filename>/` beside the FBX and Blender scene. `00_materials.json` maps object/material/image names to these files. Edit the PNGs, reload images in Blender and re-export. Keep the FBX, `.blend` and textures together: this multi-game path uses relative external textures, not embedded-only images. Original game files are untouched.
+
+Optional configuration arrays `required_mesh_names` and `required_material_names` contain case-insensitive substrings that must appear in the export inventory. Obtain these names from a known-good model, not guessed zipmod filenames. Missing requirements fail conversion explicitly.
 
 ## Feeding the Deadlock hero-swap pipeline
 
@@ -134,7 +150,7 @@ This specific example selects Sixth Streetwear Belle's shared hair, headband and
 
 Both a simple per-part dictionary and the existing Rig Transfer `parts -> part -> map` JSON schema are supported. Many-to-one mappings combine weights rather than creating nonbinding `.001` groups. Missing weighted indices fail explicitly; uncertain saved mappings still need deformation inspection. The base FBX's current pose becomes the binding rest pose, and parenting preserves mesh world transforms. Verify that the supplied base pose matches the raw model before accepting a new character.
 
-The real sample exposed an inactive BodyB resource referencing indices 27,669–27,682 despite a 27,669-vertex buffer, and BodyA uses weighted index 71 absent from its saved map. The converter rejects these cases rather than inventing a bone assignment. Choose only active components and repair the body map against the matching source skeleton before exporting a full character. Reference element bounds, triangle counts, draw ranges and index bounds are checked before Blender import.
+The real sample exposed an inactive BodyB resource referencing indices 27,669-27,682 despite a 27,669-vertex buffer, and BodyA uses weighted index 71 absent from its saved map. The converter rejects these cases rather than inventing a bone assignment. Choose only active components and repair the body map against the matching source skeleton before exporting a full character. Reference element bounds, triangle counts, draw ranges and index bounds are checked before Blender import.
 
 A neutral Blender render of the selected hairstyle was inspected and saved alongside the local FBX.
 
