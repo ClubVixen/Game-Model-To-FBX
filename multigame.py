@@ -9,7 +9,21 @@ import sys
 import struct
 from card_reader import inspect_card
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
+
+
+def reader_command(config):
+    script = str(Path(config.get('zzz_reader') or ROOT/'zzz_mod_prep.py').resolve())
+    if getattr(sys, 'frozen', False):
+        return [sys.executable, '--worker-script', script]
+    return [sys.executable, script]
+
+
+def required_file(value, label):
+    if not value or not Path(value).is_file():
+        raise FileNotFoundError(f'{label}: select an existing file (configured: {value or "not set"})')
+    return str(Path(value).resolve())
+
 
 
 def validate_zzz_buffers(path, draw_ranges=None):
@@ -59,6 +73,13 @@ def run(args, log):
 
 def inspect(source, kind, config):
     source = Path(source).resolve()
+    if kind == 'rivals':
+        from converter import discover
+        packages = discover(source)
+        if not packages:
+            raise ValueError('No Rivals .utoc packages found; unpack the download first')
+        return {'type': kind, 'packages': [str(p) for p in packages],
+                'missing_companions': [str(p.with_suffix('.ucas')) for p in packages if not p.with_suffix('.ucas').is_file()]}
     if kind == 'koikatsu' and source.name.endswith('.studio.json'):
         from studio_import import read_manifest
         data = read_manifest(source)
@@ -72,13 +93,13 @@ def inspect(source, kind, config):
             result['dependencies'] = audit_dependencies(source, config['koikatsu_mods'], config.get('koikatsu_outfit', 0))
         return result
     if kind == 'deadlock':
-        proc = subprocess.run([config['vrf'], '-i', str(source), '-l', '-e', 'vmdl_c'],
+        proc = subprocess.run([required_file(config.get('vrf'), 'Source 2 Viewer CLI'), '-i', str(source), '-l', '-e', 'vmdl_c'],
                               capture_output=True, text=True, errors='replace')
         if proc.returncode:
             raise RuntimeError(proc.stderr or proc.stdout)
         return {'type': kind, 'models': re.findall(r'(?m)^(.+?\.vmdl_c)(?:\s+CRC:.*)?$', proc.stdout)}
     if kind == 'zzz':
-        proc = subprocess.run([sys.executable, config.get('zzz_reader', str(ROOT/'zzz_mod_prep.py')), 'inspect', str(source)],
+        proc = subprocess.run(reader_command(config) + ['inspect', str(source)],
                               capture_output=True, text=True, errors='replace')
         if proc.returncode:
             raise RuntimeError(proc.stderr or proc.stdout)
@@ -86,7 +107,29 @@ def inspect(source, kind, config):
     return {'type': kind, 'source': str(source)}
 
 
-def convert(source, kind, output, config):
+def convert(source, kind, output, config, log=None):
+    if kind == 'rivals':
+        import threading
+        from converter import discover, convert as convert_rivals
+        packages = discover(source)
+        if not packages:
+            raise ValueError('No Rivals .utoc packages found')
+        results, failures = [], []
+        for package in packages:
+            try:
+                results.append(str(convert_rivals(package, output, config.get('game', ''),
+                    required_file(config.get('blender'), 'Blender'),
+                    config.get('mappings') or str(ROOT/'mappings/Marvel.usmap'),
+                    log or (lambda message: None), threading.Event())))
+            except Exception as exc:
+                failures.append(f'{package}: {exc}')
+        if failures:
+            raise RuntimeError(f'{len(results)} succeeded; failed packages: ' + '; '.join(failures))
+        return results
+    required_file(config.get('blender'), 'Blender')
+    if kind == 'deadlock':
+        required_file(config.get('vrf'), 'Source 2 Viewer CLI')
+        required_file(config.get('gameinfo'), 'Deadlock gameinfo.gi')
     source = Path(source).resolve()
     target = Path(output).resolve() / (source.stem + '_' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
     target.mkdir(parents=True)
@@ -118,7 +161,7 @@ def convert(source, kind, output, config):
             for key in ('reference', 'base_fbx', 'bone_map'):
                 if not config.get(key):
                     raise ValueError(f'ZZZ requires {key}: numeric skin indices alone do not define a skeleton')
-            run([sys.executable, config.get('zzz_reader', str(ROOT/'zzz_mod_prep.py')), 'prepare', source, '-o', target/'prepared',
+            run(reader_command(config) + ['prepare', source, '-o', target/'prepared',
                  '--ref', config['reference']], target/'prepare.log')
             job['inputs'] = [str(p) for p in (target/'prepared').glob('*.ib')]
             if config.get('components'):
@@ -178,7 +221,7 @@ def convert(source, kind, output, config):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('action', choices=['inspect', 'convert', 'convert-card'])
-    p.add_argument('kind', choices=['deadlock', 'zzz', 'koikatsu'])
+    p.add_argument('kind', choices=['rivals', 'deadlock', 'zzz', 'koikatsu'])
     p.add_argument('source', nargs='+')
     p.add_argument('--config', required=True)
     p.add_argument('--output', default='Converted')

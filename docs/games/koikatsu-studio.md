@@ -23,7 +23,7 @@ Close Studio and Maker before replacing a previous bridge build. Copy `studio-ex
 2. For retargeting, set a neutral T-pose with a neutral facial expression. The bridge captures evaluated geometry and uses the current bone transforms as the new rest pose. It does not reset animations or change the scene.
 3. Click the character's **name in Workspace** so its row is selected. Exactly one character must be selected.
 4. Click **Export selected character + textures**. Wait for the success message. The output is `Export_StudioFBX/<timestamp_character>/character.studio.json` plus `textures/` in the game folder. Keep the entire folder together.
-5. Open `python multigame_gui.py`. Choose **koikatsu**, add `character.studio.json`, select your configuration JSON and output folder, then click **Convert Batch to FBX**.
+5. Open `python app.py`. Choose **koikatsu**, add `character.studio.json`, select your configuration JSON and output folder, then click **Convert Batch to FBX**.
 6. Inspect the resulting FBX and `.blend`. PNGs are in `textures/<FBX filename>/`; `00_materials.json` identifies the object/material using each image. Keep these files together when moving the result.
 
 The selected Workspace row and export button in the running plugin:

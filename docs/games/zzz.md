@@ -1,6 +1,6 @@
 # Zenless Zone Zero buffer mods to FBX
 
-[Back to the game selector](../../README.md) · [Shared installation](../../README.md#multi-game-application-from-source)
+[Back to the game selector](../../README.md) · [Shared installation](../../README.md#install-and-start)
 
 The bundled `zzz_mod_prep.py` reader comes from the existing ZZZ mod preparation project. It reads `.ini` resource declarations and interleaves Position/Blend/Texcoord buffers into `.vb0/.ib/.fmt` for XXMITools. Use **Add mod folder** to select a folder containing the mod's INI and buffers.
 
@@ -26,7 +26,7 @@ Use the prepared part's filename stem as the key. `"*"` is a fallback only when 
 
 1. Install XXMITools in the configured Blender, then prepare the reference dump and base FBX for the exact character/version.
 2. Set `blender`, `reference`, `base_fbx`, `bone_map`, and `material_map` in your local JSON. Check each part's palette rather than reusing another character's mapping.
-3. Launch the multi-game GUI, choose **zzz**, and select your JSON and output folder.
+3. Launch `GameModelsToFBX.exe` (or `python app.py`), choose **zzz**, and select your JSON and output folder.
 4. Use **Add mod folder** for the INI and its buffers. Click **Inspect / Read Mods**.
 5. Select the intended components and toggle draw ranges in the JSON as described below.
 6. Click **Convert Batch to FBX**. Inspect the exported parts and their deformation in Blender; a component-only export does not create a missing body or face.

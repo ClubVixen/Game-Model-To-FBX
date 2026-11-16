@@ -1,6 +1,6 @@
 # Koikatsu Party to FBX
 
-[Back to the game selector](../../README.md) · [Shared installation](../../README.md#multi-game-application-from-source)
+[Back to the game selector](../../README.md) · [Shared installation](../../README.md#install-and-start)
 
 Start by choosing **Maker + KKBP** for its material-baking workflow or **[CharaStudio](koikatsu-studio.md)** to export a character already loaded in Studio with visible accessories. Both routes remain supported.
 

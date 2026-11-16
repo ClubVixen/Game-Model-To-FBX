@@ -12,11 +12,11 @@
 
 ## Convert
 
-1. Run `RivalsFbxConverter.exe` (or `python converter.py` from a configured source checkout).
-2. Select your Blender executable, installed game `Content/Paks` directory, and mapping file.
-3. Click **Add files** for package files, or add a folder recursively. Unpack ZIP/7z downloads first. A matching `.utoc`/`.ucas` pair is one conversion job.
-4. Choose an output folder and click **Convert batch**.
-5. Open the new job folder, then `FBX/`. Import the desired gameplay or lobby FBX into Blender. A failed job does not stop other queued inputs.
+1. Run `GameModelsToFBX.exe` (or `python app.py`) and choose **rivals**.
+2. Click **Create / Edit configuration**. Set `blender` to Blender's executable and `game` to the installed game's `Content/Paks` directory. Leave `mappings` empty to use the bundled mapping, or provide a matching `.usmap` path. Save the JSON.
+3. Use **Add files** for a `.utoc` package, or **Add mod folder** to search recursively. Keep `.pak`/`.ucas` companions together and add each package only once. Unpack ZIP/7z downloads first.
+4. Choose an output folder, click **Inspect / Read Mods**, then **Convert Batch to FBX**.
+5. Open the new job folder, then `FBX/`. Import the desired gameplay or lobby FBX into Blender. A failed package does not stop other queued packages.
 
 ## Textures and limitations
 

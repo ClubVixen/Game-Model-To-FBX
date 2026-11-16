@@ -9,6 +9,12 @@
   "reference": "C:/Models/ZZZ/MatchingOriginalDump",
   "base_fbx": "C:/Models/ZZZ/MatchingBase.fbx",
   "bone_map": "C:/Models/ZZZ/bone_map.json",
-  "material_map": {"ExampleBodyA": "C:/Models/ZZZ/BodyDiffuse.png"},
-  "assemblies": {"REPLACE_WITH_CARD_SHA256": "C:/Models/Koikatsu/KKBP_baked.blend"}
+  "material_map": {
+    "ExampleBodyA": "C:/Models/ZZZ/BodyDiffuse.png"
+  },
+  "assemblies": {
+    "REPLACE_WITH_CARD_SHA256": "C:/Models/Koikatsu/KKBP_baked.blend"
+  },
+  "game": "C:/Games/MarvelRivals/MarvelGame/Marvel/Content/Paks",
+  "mappings": ""
 }

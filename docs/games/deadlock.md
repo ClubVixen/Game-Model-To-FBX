@@ -1,6 +1,6 @@
 # Deadlock VPK to FBX
 
-[Back to the game selector](../../README.md) · [Shared installation](../../README.md#multi-game-application-from-source)
+[Back to the game selector](../../README.md) · [Shared installation](../../README.md#install-and-start)
 
 Install [Source 2 Viewer / ValveResourceFormat](https://github.com/ValveResourceFormat/ValveResourceFormat/releases) and Blender separately. Set:
 
@@ -18,7 +18,7 @@ The extraction enables skeleton export but requests no animation clips. The inte
 ## Convert step by step
 
 1. Configure the paths above in your local JSON.
-2. Launch `python multigame_gui.py`, choose **deadlock**, and select that JSON and an output folder.
+2. Launch `python app.py`, choose **deadlock**, and select that JSON and an output folder.
 3. Use **Add files** to add the mod VPK. Keep any companion VPK archive chunks beside it.
 4. Click **Inspect / Read Mods**. If you only want one model, copy its internal path into `model` in the JSON.
 5. Click **Convert Batch to FBX** and open the timestamped output folder.

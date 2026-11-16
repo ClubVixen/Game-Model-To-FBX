@@ -20,3 +20,6 @@ mappings/*.usmap
 *.blend1
 local-config*.json
 studio-exporter/*.dll
+
+multigame.local.json
+*.spec

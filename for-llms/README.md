@@ -5,7 +5,7 @@ Use this folder when a user asks: **“Extract this character from this game as 
 ## Work sequence
 
 1. Identify the game, input file/folder, desired character/outfit/components, installed dependencies, and output directory. Inspect connected/local files before asking for paths already available.
-2. Read the matching [game guide](../README.md#choose-your-game). Distinguish portable Rivals from source-only multi-game execution.
+2. Read the matching [game guide](../README.md#choose-your-game). Use the unified `app.py` / `GameModelsToFBX.exe` entry point for all games.
 3. Check configured executable paths and input companions. Use a local JSON copied from `multigame.example.json`; never commit personal paths, game files, cards, zipmods, keys, generated meshes, or vendor assemblies.
 4. Run inspection before conversion. For Koikatsu PNGs, inspect dependencies and assemble in Maker or Studio first. For ZZZ, resolve every weighted palette index against the correct rig and select active draw ranges.
 5. Convert into a new job directory. Preserve input files, user Blender scenes, and installed mods. FBX extraction does not require installing/disabling any Deadlock mod.
@@ -18,11 +18,11 @@ Run from the repository root after installing requirements and configuring exter
 
 ```powershell
 python converter.py "C:/Inputs/RivalsMod" --output "C:/Exports/Rivals" --game "C:/Games/Marvel/Content/Paks" --blender "C:/Tools/Blender/blender.exe" --mappings "C:/Mappings/Marvel.usmap"
-python multigame.py inspect deadlock "C:/Inputs/character_dir.vpk" --config multigame.local.json --output "C:/Exports"
-python multigame.py convert deadlock "C:/Inputs/character_dir.vpk" --config multigame.local.json --output "C:/Exports"
-python multigame.py convert zzz "C:/Inputs/ZZZMod" --config multigame.local.json --output "C:/Exports"
-python multigame.py convert-card koikatsu "C:/Inputs/card.png" --config multigame.local.json --output "C:/Exports"
-python multigame.py convert koikatsu "C:/Inputs/StudioExport/character.studio.json" --config multigame.local.json --output "C:/Exports"
+python app.py --cli inspect deadlock "C:/Inputs/character_dir.vpk" --config multigame.local.json --output "C:/Exports"
+python app.py --cli convert deadlock "C:/Inputs/character_dir.vpk" --config multigame.local.json --output "C:/Exports"
+python app.py --cli convert zzz "C:/Inputs/ZZZMod" --config multigame.local.json --output "C:/Exports"
+python app.py --cli convert-card koikatsu "C:/Inputs/card.png" --config multigame.local.json --output "C:/Exports"
+python app.py --cli convert koikatsu "C:/Inputs/StudioExport/character.studio.json" --config multigame.local.json --output "C:/Exports"
 ```
 
 These are placeholder paths. Read `--help` in the checked-out revision before scripting. Card compatibility conversion produces another card, not FBX; PNG-to-FBX requires a matching prepared assembly.
@@ -31,7 +31,8 @@ These are placeholder paths. Read `--help` in the checked-out revision before sc
 
 | File / folder | Responsibility |
 |---|---|
-| `converter.py` | Rivals GUI/CLI, staging and batch orchestration |
+| `app.py` | Unified GUI, `--cli`, and frozen `--worker-script` routing |
+| `converter.py` | Rivals backend orchestration and legacy CLI |
 | `materials.py`, `hair_bake.py` | Rivals material resolution and UV hair baking |
 | `blender_convert.py` | Rivals Blender export worker |
 | `backend-source/` | Pinned CUE4Parse backend sources/build instructions |
@@ -53,3 +54,7 @@ These are placeholder paths. Read `--help` in the checked-out revision before sc
 - Destination mod creation is separate: FBX → fitted rig/materials → DMX → compiled VPK. Keep extraction instructions separate from that build workflow.
 
 [Historical validation and implementation reference](historical-validation.md) contains older sample results and the former detailed Rivals README. Treat it as evidence with limited scope, not a current task checklist. No proprietary sample assets are required in this folder.
+
+## Packaging
+
+Build locally with `build_local.py`; see [building](../docs/building.md). Do not use GitHub Actions for EXE compilation. The frozen ZZZ route invokes `--worker-script` so its subprocess runs the reader rather than opening another GUI. External Blender scripts remain beside the EXE.

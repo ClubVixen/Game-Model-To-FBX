@@ -1,7 +1,8 @@
 # Multi-game conversion guides
 
-Start with the [README setup steps](README.md#multi-game-application-from-source), then choose:
+Start with the [README setup steps](README.md#install-and-start), then choose:
 
+- [Marvel Rivals packages](docs/games/marvel-rivals.md)
 - [Deadlock VPK](docs/games/deadlock.md)
 - [Zenless Zone Zero buffers](docs/games/zzz.md)
 - [Koikatsu Party: cards and Maker/KKBP](docs/games/koikatsu.md)
