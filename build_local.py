@@ -13,7 +13,7 @@ for name in ['docs','for-llms','studio-exporter','backend-source']:
  shutil.copytree(r/name,bundle/name,dirs_exist_ok=True,ignore=shutil.ignore_patterns('__pycache__','*.dll','bin','obj'))
 for name in ['tools','mappings','licenses']:
  if (assets/name).exists():shutil.copytree(assets/name,bundle/name,dirs_exist_ok=True)
-archive=output/'GameModelsToFBX-v4.1.0-Windows.zip'
+archive=output/'GameModelsToFBX-v4.2.0-Windows.zip'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
  for f in bundle.rglob('*'):
   if f.is_file():z.write(f,pathlib.Path('GameModelsToFBX')/f.relative_to(bundle))

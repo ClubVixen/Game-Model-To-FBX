@@ -2,6 +2,8 @@
 
 Convert local character models and mods from **Marvel Rivals, Deadlock, Zenless Zone Zero, and Koikatsu Party** to FBX for Blender and other model pipelines.
 
+![Game Model To FBX: one tab per game, a drop zone and queue, live configuration checks and an activity log](docs/images/app-overview.png)
+
 The repository name reflects its Marvel Rivals origins. **All four games now use the same application, download, and game selector.** Older v3 releases were Rivals-only; use v4 or newer for the combined application.
 
 ## Choose your game
@@ -16,11 +18,11 @@ The repository name reflects its Marvel Rivals origins. **All four games now use
 
 ## Install and start
 
-1. Download **GameModelsToFBX-v4.1.0-Windows.zip** from [Releases](https://github.com/ClubVixen/Game-Model-To-FBX/releases/latest).
+1. Download **GameModelsToFBX-v4.2.0-Windows.zip** from [Releases](https://github.com/ClubVixen/Game-Model-To-FBX/releases/latest).
 2. Extract the entire ZIP. Keep the EXE, `_internal`, tools, scripts, and other folders together. Python is included; Blender and game-specific external tools are installed separately.
-3. Run **GameModelsToFBX.exe** and select your **Source game**.
+3. Run **GameModelsToFBX.exe** and pick your game's tab along the top (Ctrl+1–4). Each tab keeps its own input queue and shows which configuration paths that game still needs.
 4. Click **Create / Edit configuration**. Replace the example paths with yours, using forward slashes in JSON paths, and save. Only configure fields needed by your chosen game. Saving as `multigame.local.json` beside the EXE makes it load automatically next time.
-5. Choose the output folder. Drag files or folders onto the input list, or use the buttons. Use **Add files** or **Add mod folder**, then **Inspect / Read Mods**.
+5. Choose the output folder. Drag files or folders onto the drop zone or queue, or use the links in the drop zone. Use **Add files** or **Add mod folder**, then **Inspect / Read Mods**.
 6. Resolve any missing dependencies using the game guide above, then click **Convert Batch to FBX**.
 
 The configuration editor serves all games. For Rivals, set `blender` and `game` (the installed `Content/Paks` folder); leave `mappings` empty to use the bundled mapping. For other games, follow their linked configuration tables. Koikatsu's card conversion button converts Sunshine cards to KK cards; assembling/exporting a character still requires Maker or Studio and its mods.
