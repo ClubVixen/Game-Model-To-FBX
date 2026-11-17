@@ -9,11 +9,24 @@ from multigame import convert, inspect, ROOT
 from tkinter import messagebox
 
 
-class App(tk.Tk):
+from tkinterdnd2 import TkinterDnD, DND_FILES
+
+class App(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
-        self.title('Game Models to FBX')
-        self.geometry('900x660')
+        self.title('Game Model To FBX')
+        self.configure(background='#18212f')
+        style = ttk.Style(self)
+        style.theme_use('clam')
+        style.configure('.', background='#18212f', foreground='#edf2fa', font=('Segoe UI', 10))
+        style.configure('TButton', padding=(14, 9), background='#30445f')
+        style.map('TButton', background=[('active', '#416184')])
+        style.configure('TEntry', fieldbackground='#ffffff', foreground='#18212f')
+        style.configure('TCombobox', fieldbackground='#ffffff', foreground='#18212f')
+        ttk.Label(self, text='Game Model To FBX', font=('Segoe UI', 23, 'bold')).pack(anchor='w', padx=18, pady=(16, 2))
+        ttk.Label(self, text='Choose a game · Add your models · Export to FBX').pack(anchor='w', padx=20, pady=(0, 12))
+        self.geometry('980x800')
+        self.minsize(850, 700)
         self.kind = tk.StringVar(value='rivals')
         self.config_path = tk.StringVar(value=str(ROOT/'multigame.local.json') if (ROOT/'multigame.local.json').is_file() else '')
         self.output = tk.StringVar(value=str(Path.home()/'Documents'/'ConvertedMods'))
@@ -32,7 +45,10 @@ class App(tk.Tk):
         tools.pack(fill='x')
         ttk.Button(tools, text='Create / Edit configuration', command=self.edit_config).pack(side='left')
         ttk.Button(tools, text='Game instructions', command=self.open_guide).pack(side='left', padx=10)
-        self.inputs = tk.Listbox(self, selectmode='extended', height=9)
+        ttk.Label(self, text='Drop files or folders below, or use Add files', font=('Segoe UI', 11, 'bold')).pack(anchor='w', padx=12, pady=6)
+        self.inputs = tk.Listbox(self, selectmode='extended', height=9, bg='#243247', fg='#edf2fa', selectbackground='#416da6', relief='flat', font=('Segoe UI', 10))
+        self.inputs.drop_target_register(DND_FILES)
+        self.inputs.dnd_bind('<<Drop>>', self.drop_files)
         self.inputs.pack(fill='x', padx=10)
         row = ttk.Frame(self, padding=10)
         row.pack(fill='x')
@@ -51,14 +67,22 @@ class App(tk.Tk):
         self.log.pack(fill='both', expand=True, padx=10, pady=10)
         self.after(150, self.poll)
 
+    def drop_files(self, event):
+        existing = set(self.inputs.get(0, 'end'))
+        for path in self.tk.splitlist(event.data):
+            if Path(path).exists() and path not in existing:
+                self.inputs.insert('end', path)
+                existing.add(path)
+        return 'copy'
+
     def open_guide(self):
         pages = {'rivals':'marvel-rivals', 'deadlock':'deadlock', 'zzz':'zzz', 'koikatsu':'koikatsu'}
         import webbrowser
-        webbrowser.open('https://github.com/ClubVixen/marvel-rivals-fbx-converter/blob/main/docs/games/' + pages[self.kind.get()] + '.md')
+        webbrowser.open('https://github.com/ClubVixen/Game-Model-To-FBX/blob/main/docs/games/' + pages[self.kind.get()] + '.md')
 
     def edit_config(self):
         window = tk.Toplevel(self)
-        window.title('Configuration — paths and advanced game options')
+        window.title('Configuration â€” paths and advanced game options')
         window.geometry('850x600')
         ttk.Label(window, text='Edit paths for your game. Use forward slashes in JSON paths. Other game fields may be left unused.').pack(pady=8)
         editor = tk.Text(window, wrap='none')
@@ -80,7 +104,7 @@ class App(tk.Tk):
                 window.destroy()
             except (ValueError, OSError) as exc:
                 messagebox.showerror('Cannot save configuration', str(exc), parent=window)
-        ttk.Button(window, text='Save configuration as…', command=save).pack(pady=10)
+        ttk.Button(window, text='Save configuration asâ€¦', command=save).pack(pady=10)
 
     def browse(self, variable, folder):
         p = filedialog.askdirectory() if folder else filedialog.askopenfilename(filetypes=[('JSON', '*.json')])

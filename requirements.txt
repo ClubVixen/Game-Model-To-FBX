@@ -4,3 +4,5 @@ cryptography>=42
 pyinstaller>=6
 msgpack>=1.0,<2
 kkloader==0.1.7
+
+tkinterdnd2>=0.4,<0.5

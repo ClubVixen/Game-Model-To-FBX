@@ -16,7 +16,7 @@ The repository name reflects its Marvel Rivals origins. **All four games now use
 
 ## Install and start
 
-1. Download **GameModelsToFBX-v4.0.0-Windows.zip** from [Releases](https://github.com/ClubVixen/marvel-rivals-fbx-converter/releases/latest).
+1. Download **GameModelsToFBX-v4.0.0-Windows.zip** from [Releases](https://github.com/ClubVixen/Game-Model-To-FBX/releases/latest).
 2. Extract the entire ZIP. Keep the EXE, `_internal`, tools, scripts, and other folders together. Python is included; Blender and game-specific external tools are installed separately.
 3. Run **GameModelsToFBX.exe** and select your **Source game**.
 4. Click **Create / Edit configuration**. Replace the example paths with yours, using forward slashes in JSON paths, and save. Only configure fields needed by your chosen game. Saving as `multigame.local.json` beside the EXE makes it load automatically next time.
