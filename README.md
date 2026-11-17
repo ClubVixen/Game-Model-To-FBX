@@ -16,11 +16,11 @@ The repository name reflects its Marvel Rivals origins. **All four games now use
 
 ## Install and start
 
-1. Download **GameModelsToFBX-v4.0.0-Windows.zip** from [Releases](https://github.com/ClubVixen/Game-Model-To-FBX/releases/latest).
+1. Download **GameModelsToFBX-v4.1.0-Windows.zip** from [Releases](https://github.com/ClubVixen/Game-Model-To-FBX/releases/latest).
 2. Extract the entire ZIP. Keep the EXE, `_internal`, tools, scripts, and other folders together. Python is included; Blender and game-specific external tools are installed separately.
 3. Run **GameModelsToFBX.exe** and select your **Source game**.
 4. Click **Create / Edit configuration**. Replace the example paths with yours, using forward slashes in JSON paths, and save. Only configure fields needed by your chosen game. Saving as `multigame.local.json` beside the EXE makes it load automatically next time.
-5. Choose the output folder. Use **Add files** or **Add mod folder**, then **Inspect / Read Mods**.
+5. Choose the output folder. Drag files or folders onto the input list, or use the buttons. Use **Add files** or **Add mod folder**, then **Inspect / Read Mods**.
 6. Resolve any missing dependencies using the game guide above, then click **Convert Batch to FBX**.
 
 The configuration editor serves all games. For Rivals, set `blender` and `game` (the installed `Content/Paks` folder); leave `mappings` empty to use the bundled mapping. For other games, follow their linked configuration tables. Koikatsu's card conversion button converts Sunshine cards to KK cards; assembling/exporting a character still requires Maker or Studio and its mods.
